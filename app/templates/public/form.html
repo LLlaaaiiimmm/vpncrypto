@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Weeden Feedback</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="public-wrapper">
+    <div class="weeden-banner">
+        <img src="/static/images/weeden-logo.svg" alt="Weeden" class="logo-img">
+        <h1>Weeden Feedback</h1>
+        <p class="tagline">Share your thoughts, ideas, or concerns<br>Your voice matters to us</p>
+        <span class="badge">100% ANONYMOUS • CANNABIS FREEDOM</span>
+    </div>
+
+    <div class="form-card">
+        <form action="/submit" method="post" enctype="multipart/form-data" id="feedbackForm">
+            <div class="form-group">
+                <label for="category">Category *</label>
+                <select name="category" id="category" required>
+                    <option value="" disabled selected>Select a category...</option>
+                    <option value="complaint">&#x1F534; Complaint</option>
+                    <option value="idea">&#x1F4A1; Idea</option>
+                    <option value="recommendation">&#x2705; Recommendation</option>
+                    <option value="other">&#x1F4AC; Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Your Message</label>
+                <textarea name="message" id="message" maxlength="1000" placeholder="Tell us what's on your mind... Write in any language."></textarea>
+                <div class="char-count"><span id="charCount">0</span>/1000</div>
+            </div>
+
+            <div class="form-group">
+                <label>Attach Photo (optional)</label>
+                <input type="file" name="photo" id="photo" accept="image/jpeg,image/png">
+                <img id="photoPreview" class="photo-preview" alt="Preview">
+            </div>
+
+            <div class="consent-row">
+                <input type="checkbox" name="anonymity_consent" id="consent" value="yes" required>
+                <label for="consent">
+                    I confirm that this channel is anonymous and I do not include any personal data (name, phone number, or other identifying information) in my message.
+                </label>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn" disabled>Send Feedback</button>
+        </form>
+
+        <p class="privacy-note">
+            &#x1F512; Anonymous: we do not collect your name, store, or phone.
+            Technical data (IP) is used only for spam protection and stored in hashed form.
+        </p>
+    </div>
+</div>
+
+<script>
+const msg = document.getElementById('message');
+const count = document.getElementById('charCount');
+const consent = document.getElementById('consent');
+const submitBtn = document.getElementById('submitBtn');
+const photoInput = document.getElementById('photo');
+const preview = document.getElementById('photoPreview');
+
+msg.addEventListener('input', () => { count.textContent = msg.value.length; });
+consent.addEventListener('change', () => { submitBtn.disabled = !consent.checked; });
+
+photoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File too large. Maximum size is 5MB.');
+            photoInput.value = '';
+            preview.style.display = 'none';
+            return;
+        }
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+            alert('Only JPG and PNG files are allowed.');
+            photoInput.value = '';
+            preview.style.display = 'none';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => { preview.src = ev.target.result; preview.style.display = 'block'; };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+document.getElementById('feedbackForm').addEventListener('submit', function() {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+});
+</script>
+</body>
+</html>

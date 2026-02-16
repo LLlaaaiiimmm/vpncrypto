@@ -1,0 +1,26 @@
+services:
+  bfs:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: budtender-feedback-system
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data        # Persist database & uploads
+    env_file:
+      - .env                    # Load environment variables
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      - PYTHONUNBUFFERED=1      # Real-time logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

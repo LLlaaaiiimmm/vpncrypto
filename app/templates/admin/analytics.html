@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Weeden Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Analytics</h1>
+            <a href="/admin/export" class="btn btn-secondary">&#x1F4E5; Export CSV</a>
+        </div>
+
+        <div class="analytics-grid">
+            <!-- By Category -->
+            <div class="chart-card">
+                <h3>Breakdown by Category</h3>
+                {% set colors = {'complaint': 'red', 'idea': 'blue', 'recommendation': 'green', 'other': 'gray'} %}
+                {% set max_cat = by_category[0].cnt if by_category else 1 %}
+                {% for item in by_category %}
+                <div class="bar-row">
+                    <div class="bar-label">{{ item.category | capitalize }}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill {{ colors.get(item.category, 'gray') }}" style="width:{{ (item.cnt / max_cat * 100) | int }}%">{{ item.cnt }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not by_category %}
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">No data yet</p>
+                {% endif %}
+            </div>
+
+            <!-- By Status -->
+            <div class="chart-card">
+                <h3>Breakdown by Status</h3>
+                {% set status_colors = {'new': 'green', 'read': 'blue', 'in_progress': 'yellow', 'resolved': 'gray', 'rejected': 'red'} %}
+                {% set max_st = by_status[0].cnt if by_status else 1 %}
+                {% for item in by_status %}
+                <div class="bar-row">
+                    <div class="bar-label">{{ item.status | capitalize }}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill {{ status_colors.get(item.status, 'gray') }}" style="width:{{ (item.cnt / max_st * 100) | int }}%">{{ item.cnt }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not by_status %}
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">No data yet</p>
+                {% endif %}
+            </div>
+
+            <!-- Top Tags -->
+            <div class="chart-card">
+                <h3>Top Tags / Topics</h3>
+                {% set max_tag = by_tag[0][1] if by_tag else 1 %}
+                {% for tag_name, tag_count in by_tag[:10] %}
+                <div class="bar-row">
+                    <div class="bar-label">{{ tag_name }}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill purple" style="width:{{ (tag_count / max_tag * 100) | int }}%">{{ tag_count }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not by_tag %}
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">No data yet</p>
+                {% endif %}
+            </div>
+
+            <!-- Daily Volume (last 30 days) -->
+            <div class="chart-card">
+                <h3>Daily Volume (Last 30 Days)</h3>
+                {% set max_day = 1 %}
+                {% for d in daily %}{% if d.cnt > max_day %}{% set max_day = d.cnt %}{% endif %}{% endfor %}
+                <div style="max-height:300px;overflow-y:auto;">
+                {% for d in daily %}
+                <div class="bar-row">
+                    <div class="bar-label" style="width:80px;font-size:12px;">{{ d.day[5:] }}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill green" style="width:{{ (d.cnt / max_day * 100) | int }}%">{{ d.cnt }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+                </div>
+                {% if not daily %}
+                <p style="text-align:center;color:var(--text-secondary);padding:20px;">No data yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

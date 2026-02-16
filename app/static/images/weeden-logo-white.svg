@@ -1,0 +1,33 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cannabis leaf design - white version for dark backgrounds -->
+  <g transform="translate(60, 60)">
+    <!-- Center leaf -->
+    <path d="M 0,-40 Q 3,-25 5,-15 Q 6,-5 5,5 Q 3,15 0,25 Q -3,15 -5,5 Q -6,-5 -5,-15 Q -3,-25 0,-40 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    
+    <!-- Left leaves -->
+    <path d="M -5,-15 Q -15,-20 -25,-18 Q -30,-15 -28,-8 Q -25,-3 -15,0 Q -10,2 -5,0 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    <path d="M -8,-5 Q -20,-8 -30,-5 Q -35,0 -32,8 Q -28,12 -18,10 Q -12,8 -8,5 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    
+    <!-- Right leaves -->
+    <path d="M 5,-15 Q 15,-20 25,-18 Q 30,-15 28,-8 Q 25,-3 15,0 Q 10,2 5,0 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    <path d="M 8,-5 Q 20,-8 30,-5 Q 35,0 32,8 Q 28,12 18,10 Q 12,8 8,5 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    
+    <!-- Bottom leaves -->
+    <path d="M -3,10 Q -8,18 -6,28 Q -3,32 3,30 Q 6,25 5,18 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    <path d="M 3,10 Q 8,18 6,28 Q 3,32 -3,30 Q -6,25 -5,18 Z" 
+          fill="#F6D14E" stroke="#F59E0B" stroke-width="1"/>
+    
+    <!-- Accent circle -->
+    <circle cx="0" cy="-5" r="3" fill="#10B981"/>
+  </g>
+  
+  <!-- Optional: Add text "W" below -->
+  <text x="60" y="95" font-family="Inter, sans-serif" font-size="24" font-weight="700" 
+        fill="#F6D14E" text-anchor="middle">W</text>
+</svg>

@@ -1,0 +1,28 @@
+<aside class="sidebar">
+    <div class="logo">
+        <img src="/static/images/weeden-logo-white.svg" alt="Weeden" class="logo-img">
+        <h2>WEEDEN</h2>
+        <small>Feedback System</small>
+    </div>
+    <nav>
+        <a href="/admin/inbox" class="{{ 'active' if '/inbox' in request.url.path }}">
+            <span class="icon">&#x1F4E5;</span> Inbox
+        </a>
+        <a href="/admin/analytics" class="{{ 'active' if '/analytics' in request.url.path }}">
+            <span class="icon">&#x1F4CA;</span> Analytics
+        </a>
+        {% if user.role == 'admin' %}
+        <a href="/admin/users" class="{{ 'active' if '/users' in request.url.path }}">
+            <span class="icon">&#x1F465;</span> Users
+        </a>
+        {% endif %}
+        <a href="/admin/export">
+            <span class="icon">&#x1F4E5;</span> CSV Export
+        </a>
+    </nav>
+    <div class="user-info">
+        <div class="name">{{ user.name }}</div>
+        <div class="role">{{ user.role }}</div>
+        <a href="/admin/logout" style="color:#EF4444;font-size:12px;margin-top:8px;display:block;">Logout</a>
+    </div>
+</aside>

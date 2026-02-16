@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox - Weeden Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Inbox</h1>
+            <div style="display:flex;gap:10px;">
+                <a href="/admin/export" class="btn btn-secondary">&#x1F4E5; Export CSV</a>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card total"><div class="label">Total</div><div class="value">{{ stats.total }}</div></div>
+            <div class="stat-card new"><div class="label">New</div><div class="value">{{ stats.new }}</div></div>
+            <div class="stat-card read"><div class="label">Read</div><div class="value">{{ stats.read }}</div></div>
+            <div class="stat-card resolved"><div class="label">Resolved</div><div class="value">{{ stats.resolved }}</div></div>
+        </div>
+
+        <form method="get" action="/admin/inbox" class="filters-bar">
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="new" {{ 'selected' if filter_status == 'new' }}>New</option>
+                <option value="read" {{ 'selected' if filter_status == 'read' }}>Read</option>
+                <option value="in_progress" {{ 'selected' if filter_status == 'in_progress' }}>In Progress</option>
+                <option value="resolved" {{ 'selected' if filter_status == 'resolved' }}>Resolved</option>
+                <option value="rejected" {{ 'selected' if filter_status == 'rejected' }}>Rejected</option>
+            </select>
+            <select name="category">
+                <option value="">All Categories</option>
+                <option value="complaint" {{ 'selected' if filter_category == 'complaint' }}>Complaint</option>
+                <option value="idea" {{ 'selected' if filter_category == 'idea' }}>Idea</option>
+                <option value="recommendation" {{ 'selected' if filter_category == 'recommendation' }}>Recommendation</option>
+                <option value="other" {{ 'selected' if filter_category == 'other' }}>Other</option>
+            </select>
+            <select name="tag">
+                <option value="">All Tags</option>
+                {% for t in allowed_tags %}
+                <option value="{{ t }}" {{ 'selected' if filter_tag == t }}>{{ t }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="search" value="{{ search }}" placeholder="Search messages, IDs, translations...">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="/admin/inbox" class="btn btn-secondary">Reset</a>
+        </form>
+
+        <div class="bulk-bar" id="bulkBar">
+            <span id="selectedCount">0</span> selected
+            <select id="bulkStatus">
+                <option value="read">Mark as Read</option>
+                <option value="in_progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="applyBulk()">Apply</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Summary</th>
+                        <th>Tags</th>
+                        <th>Status</th>
+                        <th>AI</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for f in feedbacks %}
+                    <tr class="{{ 'is-new' if f.status == 'new' }}">
+                        <td><input type="checkbox" class="row-check" value="{{ f.id }}"></td>
+                        <td style="font-family:monospace;font-size:13px;">{{ f.submission_id }}</td>
+                        <td style="white-space:nowrap;font-size:13px;">{{ f.created_at[:16] }}</td>
+                        <td><span class="cat-badge cat-{{ f.category }}">{{ f.category }}</span></td>
+                        <td>
+                            <div class="summary-text">{{ f.summary or f.message[:80] or '(no text)' }}</div>
+                        </td>
+                        <td>
+                            {% if f.tags %}
+                                {% for t in f.tags.split(',') %}
+                                    <span class="tag">{{ t }}</span>
+                                {% endfor %}
+                            {% endif %}
+                            {% if f.photo_path %}<span class="photo-indicator" title="Has photo">&#x1F4F7;</span>{% endif %}
+                        </td>
+                        <td><span class="status-badge status-{{ f.status }}">{{ f.status }}</span></td>
+                        <td>
+                            {% if f.ai_status == 'done' %}&#x2705;
+                            {% elif f.ai_status == 'processing' %}&#x23F3;
+                            {% elif f.ai_status == 'failed' %}&#x274C;
+                            {% else %}&#x23F3;{% endif %}
+                        </td>
+                        <td><a href="/admin/feedback/{{ f.id }}" class="btn btn-sm btn-secondary">View</a></td>
+                    </tr>
+                {% endfor %}
+                {% if not feedbacks %}
+                    <tr><td colspan="9" style="text-align:center;padding:40px;color:#9CA3AF;">No feedback found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}<a href="?page={{ page-1 }}&status={{ filter_status or '' }}&category={{ filter_category or '' }}&tag={{ filter_tag or '' }}&search={{ search }}">&laquo; Prev</a>{% endif %}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == page %}
+                    <span class="active">{{ p }}</span>
+                {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                    <a href="?page={{ p }}&status={{ filter_status or '' }}&category={{ filter_category or '' }}&tag={{ filter_tag or '' }}&search={{ search }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page < total_pages %}<a href="?page={{ page+1 }}&status={{ filter_status or '' }}&category={{ filter_category or '' }}&tag={{ filter_tag or '' }}&search={{ search }}">Next &raquo;</a>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const selectAll = document.getElementById('selectAll');
+const checks = document.querySelectorAll('.row-check');
+const bulkBar = document.getElementById('bulkBar');
+const selectedCount = document.getElementById('selectedCount');
+
+function updateBulk() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    selectedCount.textContent = checked.length;
+    bulkBar.classList.toggle('visible', checked.length > 0);
+}
+
+selectAll.addEventListener('change', () => {
+    checks.forEach(c => c.checked = selectAll.checked);
+    updateBulk();
+});
+checks.forEach(c => c.addEventListener('change', updateBulk));
+
+async function applyBulk() {
+    const ids = [...document.querySelectorAll('.row-check:checked')].map(c => parseInt(c.value));
+    const status = document.getElementById('bulkStatus').value;
+    const res = await fetch('/api/feedback/bulk-status', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ids, status})
+    });
+    if (res.ok) location.reload();
+    else alert('Error updating statuses');
+}
+</script>
+</body>
+</html>

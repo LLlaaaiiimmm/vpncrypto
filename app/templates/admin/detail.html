@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ feedback.submission_id }} - Weeden Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+
+    <div class="main-content">
+        <a href="/admin/inbox" class="back-link">&#x2190; Back to Inbox</a>
+
+        <div class="page-header">
+            <h1>
+                <span style="font-family:monospace;color:var(--primary-dark);">{{ feedback.submission_id }}</span>
+                <span class="cat-badge cat-{{ feedback.category }}" style="font-size:14px;margin-left:8px;">{{ feedback.category }}</span>
+                <span class="status-badge status-{{ feedback.status }}" style="margin-left:8px;">{{ feedback.status }}</span>
+            </h1>
+            <div style="font-size:13px;color:var(--text-secondary);">{{ feedback.created_at }}</div>
+        </div>
+
+        <div class="detail-grid">
+            <!-- Left column: Original + Translations -->
+            <div>
+                <div class="detail-card">
+                    <h3>Original Message</h3>
+                    {% if feedback.detected_language %}
+                    <div class="field">
+                        <span class="field-label">Detected Language:</span>
+                        <span style="font-weight:600;">{{ feedback.detected_language | upper }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="original-text">{{ feedback.message or '(no text)' }}</div>
+                </div>
+
+                {% if feedback.photo_path %}
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Photo Attachment</h3>
+                    <img src="/uploads/{{ feedback.photo_path }}" class="detail-photo" alt="Attached photo"
+                         onclick="window.open(this.src, '_blank')">
+                </div>
+                {% endif %}
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>AI Translations</h3>
+                    {% if feedback.ai_status == 'done' %}
+                        <div class="translation-block">
+                            <div class="field-label">&#x1F1EC;&#x1F1E7; English Translation</div>
+                            <div style="margin-top:4px;font-size:14px;">{{ feedback.translation_en or '(not available)' }}</div>
+                        </div>
+                        <div class="translation-block ru">
+                            <div class="field-label">&#x1F1F7;&#x1F1FA; Russian Translation</div>
+                            <div style="margin-top:4px;font-size:14px;">{{ feedback.translation_ru or '(not available)' }}</div>
+                        </div>
+                    {% elif feedback.ai_status == 'processing' %}
+                        <p style="color:var(--warning);">&#x23F3; AI is processing this message...</p>
+                    {% elif feedback.ai_status == 'failed' %}
+                        <p style="color:var(--danger);">&#x274C; AI processing failed. Raw message is preserved.</p>
+                    {% else %}
+                        <p style="color:var(--text-secondary);">&#x23F3; Pending AI processing...</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right column: Metadata + Actions -->
+            <div>
+                <div class="detail-card">
+                    <h3>AI Summary & Tags</h3>
+                    <div class="field">
+                        <div class="field-label">Summary</div>
+                        <div class="field-value" style="font-size:15px;font-weight:500;">{{ feedback.summary or '(pending)' }}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Tags</div>
+                        <div class="field-value">
+                            {% if feedback.tags %}
+                                {% for t in feedback.tags.split(',') %}
+                                    <span class="tag" style="font-size:13px;">{{ t }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color:var(--text-secondary);font-size:13px;">(pending)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Status</h3>
+                    <select class="status-select" id="statusSelect" onchange="updateStatus(this.value)">
+                        <option value="new" {{ 'selected' if feedback.status == 'new' }}>New</option>
+                        <option value="read" {{ 'selected' if feedback.status == 'read' }}>Read</option>
+                        <option value="in_progress" {{ 'selected' if feedback.status == 'in_progress' }}>In Progress</option>
+                        <option value="resolved" {{ 'selected' if feedback.status == 'resolved' }}>Resolved</option>
+                        <option value="rejected" {{ 'selected' if feedback.status == 'rejected' }}>Rejected</option>
+                    </select>
+                </div>
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Private Note</h3>
+                    <textarea class="note-area" id="noteArea" placeholder="Add internal notes here...">{{ feedback.private_note or '' }}</textarea>
+                    <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveNote()">Save Note</button>
+                </div>
+
+                {% if user.role == 'admin' %}
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Admin Actions</h3>
+                    <button class="btn btn-danger btn-sm" onclick="softDelete()">&#x1F5D1; Soft Delete</button>
+                    <p style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Message will be hidden but retained for audit.</p>
+                </div>
+                {% endif %}
+
+                <div class="detail-card" style="margin-top:20px;">
+                    <h3>Technical Metadata</h3>
+                    <div class="field">
+                        <div class="field-label">Submission ID</div>
+                        <div class="field-value" style="font-family:monospace;">{{ feedback.submission_id }}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Created</div>
+                        <div class="field-value">{{ feedback.created_at }}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Updated</div>
+                        <div class="field-value">{{ feedback.updated_at }}</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">AI Status</div>
+                        <div class="field-value">{{ feedback.ai_status }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const feedbackId = {{ feedback.id }};
+
+async function updateStatus(status) {
+    await fetch(`/api/feedback/${feedbackId}/status`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status})
+    });
+}
+
+async function saveNote() {
+    const note = document.getElementById('noteArea').value;
+    const res = await fetch(`/api/feedback/${feedbackId}/note`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({note})
+    });
+    if (res.ok) {
+        const btn = event.target;
+        btn.textContent = 'Saved!';
+        setTimeout(() => btn.textContent = 'Save Note', 1500);
+    }
+}
+
+async function softDelete() {
+    if (!confirm('Are you sure? This will hide the message from standard views.')) return;
+    const res = await fetch(`/api/feedback/${feedbackId}/delete`, {method: 'POST'});
+    if (res.ok) window.location.href = '/admin/inbox';
+    else alert('Error: Only admins can delete messages.');
+}
+</script>
+</body>
+</html>
